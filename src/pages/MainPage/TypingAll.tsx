@@ -5,8 +5,17 @@ const sampleTexts = [
   "Technology has revolutionized the way we communicate and interact with each other in modern society bringing people closer despite physical distances.",
   "Practice makes perfect when learning new skills and developing expertise in any field requires dedication patience and consistent effort over time.",
   "Mountains rise majestically above the clouds while valleys stretch endlessly below creating breathtaking landscapes that inspire wonder and admiration.",
-  "Music has the power to evoke emotions and memories transporting us to different times and places with just a simple melody or harmony."
+  "Music has the power to evoke emotions and memories transporting us to different times and places with just a simple melody or harmony.",
+  "A gentle breeze rustled through the autumn leaves as the sun dipped below the horizon painting the sky with shades of orange and pink.",
+  "Reading books expands the mind, allowing people to travel through time and space, experiencing lives and worlds beyond their own imagination.",
+  "In the bustling city, lights flickered on as night fell, and the streets were filled with the sounds of laughter, cars, and distant music.",
+  "Mathematics is the language of the universe, unlocking patterns and relationships that explain everything from the tiniest atom to the vastness of galaxies.",
+  "Cooking is an art that combines creativity, precision, and patience, turning simple ingredients into meals that nourish both body and soul.",
+  "The ocean waves crashed against the shore, leaving behind seashells and driftwood, while gulls circled overhead in search of food.",
+  "Innovation often comes from curiosity, experimentation, and the willingness to embrace failure as a stepping stone to success.",
+  "History teaches us valuable lessons about human nature, triumphs, failures, and the enduring quest for knowledge and understanding."
 ];
+
 
 const difficultyLevels = [
   { name: "Easy", wordsPerMinute: 40, color: "from-emerald-400 to-teal-400" },
