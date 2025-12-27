@@ -1,0 +1,229 @@
+import React, { useState, useEffect, useRef } from 'react';
+
+const sampleTexts = [
+  "The quick brown fox jumps over the lazy dog near the riverbank where children play and birds sing their morning songs under the bright blue sky.",
+  "Technology has revolutionized the way we communicate and interact with each other in modern society bringing people closer despite physical distances.",
+  "Practice makes perfect when learning new skills and developing expertise in any field requires dedication patience and consistent effort over time.",
+  "Mountains rise majestically above the clouds while valleys stretch endlessly below creating breathtaking landscapes that inspire wonder and admiration.",
+  "Music has the power to evoke emotions and memories transporting us to different times and places with just a simple melody or harmony."
+];
+
+export default function TypingSpeedTest() {
+  const [text, setText] = useState('');
+  const [input, setInput] = useState('');
+  const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
+  const [startTime, setStartTime] = useState(null);
+  const [timeLimit, setTimeLimit] = useState(30);
+  const [timeRemaining, setTimeRemaining] = useState(30);
+  const [wpm, setWpm] = useState(0);
+  const [accuracy, setAccuracy] = useState(100);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [errors, setErrors] = useState(0);
+  const inputRef = useRef(null);
+  const cursorRef = useRef(null);
+
+  useEffect(() => resetTest(), []);
+
+  useEffect(() => {
+    let interval;
+    if (started && !finished && timeRemaining > 0) {
+      interval = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            setFinished(true);
+            calculateFinalWPM();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [started, finished, timeRemaining]);
+
+  useEffect(() => {
+    if (cursorRef.current) {
+      const textElement = document.getElementById('text-display');
+      const chars = textElement?.getElementsByClassName('char');
+      if (chars && chars[currentIndex]) {
+        const rect = chars[currentIndex].getBoundingClientRect();
+        const containerRect = textElement.getBoundingClientRect();
+        cursorRef.current.style.transform = `translate(${rect.left - containerRect.left}px, ${rect.top - containerRect.top}px)`;
+      }
+    }
+  }, [currentIndex]);
+
+  const resetTest = () => {
+    const randomText = sampleTexts[Math.floor(Math.random() * sampleTexts.length)];
+    setText(randomText);
+    setInput('');
+    setStarted(false);
+    setFinished(false);
+    setStartTime(null);
+    setTimeRemaining(timeLimit);
+    setWpm(0);
+    setAccuracy(100);
+    setCurrentIndex(0);
+    setErrors(0);
+    if (inputRef.current) inputRef.current.focus();
+  };
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    if (!started) {
+      setStarted(true);
+      setStartTime(Date.now());
+    }
+    if (finished) return;
+
+    setInput(value);
+    setCurrentIndex(value.length);
+
+    // Count errors
+    let errorCount = 0;
+    for (let i = 0; i < value.length; i++) {
+      if (value[i] !== text[i]) errorCount++;
+    }
+    setErrors(errorCount);
+
+    // Calculate accuracy
+    const acc = value.length > 0 ? ((value.length - errorCount) / value.length) * 100 : 100;
+    setAccuracy(Math.round(acc));
+
+    // Calculate WPM
+    if (started) calculateWPM(value);
+  };
+
+  const calculateWPM = (typedText) => {
+    const timeElapsed = (Date.now() - startTime) / 1000 / 60;
+    const wordsTyped = typedText.trim().split(/\s+/).filter(w => w.length > 0).length;
+    setWpm(Math.round(wordsTyped / timeElapsed) || 0);
+  };
+
+  const calculateFinalWPM = () => {
+    const wordsTyped = input.trim().split(/\s+/).filter(w => w.length > 0).length;
+    setWpm(Math.round(wordsTyped / (timeLimit / 60)) || 0);
+  };
+
+  const getCharClass = (index) => {
+    if (index < currentIndex) {
+      return input[index] === text[index] ? 'text-green-400' : 'text-red-400 bg-red-900/30';
+    }
+    if (index === currentIndex) return 'bg-yellow-400/40';
+    return 'text-gray-500';
+  };
+
+  const changeTimeLimit = (seconds) => {
+    setTimeLimit(seconds);
+    setTimeRemaining(seconds);
+    resetTest();
+  };
+
+  const timeProgress = ((timeLimit - timeRemaining) / timeLimit) * 100;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex flex-col items-center justify-center p-6">
+      <div className="max-w-3xl w-full bg-gray-800 rounded-2xl shadow-xl p-6">
+        <h1 className="text-4xl font-bold text-yellow-400 text-center mb-4">TypeTest 2.0</h1>
+        <p className="text-gray-400 text-center mb-6">Test your typing speed and accuracy in real-time</p>
+
+        {/* Time Selector */}
+        <div className="flex justify-center gap-3 mb-6">
+          {[15, 30, 60].map((t) => (
+            <button
+              key={t}
+              onClick={() => changeTimeLimit(t)}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                timeLimit === t
+                  ? 'bg-yellow-400 text-gray-900'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              {t}s
+            </button>
+          ))}
+        </div>
+
+        {/* Stats */}
+        {started && (
+          <div className="flex justify-between mb-4 text-center">
+            <div>
+              <p className="text-yellow-400 text-xl font-bold">{timeRemaining}s</p>
+              <p className="text-gray-400 text-sm">Time</p>
+            </div>
+            <div>
+              <p className="text-blue-400 text-xl font-bold">{wpm}</p>
+              <p className="text-gray-400 text-sm">WPM</p>
+            </div>
+            <div>
+              <p className="text-green-400 text-xl font-bold">{accuracy}%</p>
+              <p className="text-gray-400 text-sm">Accuracy</p>
+            </div>
+            <div>
+              <p className="text-purple-400 text-xl font-bold">{errors}</p>
+              <p className="text-gray-400 text-sm">Errors</p>
+            </div>
+          </div>
+        )}
+
+        {/* Progress Bar */}
+        {started && (
+          <div className="w-full bg-gray-700 rounded-full h-2 mb-6 overflow-hidden">
+            <div
+              className="bg-yellow-400 h-2 transition-all duration-500"
+              style={{ width: `${timeProgress}%` }}
+            />
+          </div>
+        )}
+
+        {/* Text Display */}
+        <div className="bg-gray-900 rounded-xl p-5 mb-6 relative">
+          <div id="text-display" className="text-lg leading-relaxed font-mono flex flex-wrap relative">
+            <div
+              ref={cursorRef}
+              className="absolute w-0.5 h-6 bg-yellow-400 animate-pulse transition-transform duration-100 ease-out"
+              style={{ transformOrigin: 'top left' }}
+            />
+            {text.split('').map((char, index) => (
+              <span key={index} className={`char ${getCharClass(index)} transition-colors duration-100`}>
+                {char}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Input */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={handleInputChange}
+          disabled={finished}
+          placeholder={finished ? 'Test completed!' : 'Start typing here...'}
+          className="w-full bg-gray-800 text-white p-4 rounded-xl border border-gray-700 focus:border-yellow-400 focus:outline-none font-mono text-lg disabled:opacity-60 mb-6"
+        />
+
+        {/* Results */}
+        {finished && (
+          <div className="bg-yellow-400 rounded-xl p-5 mb-6 text-center text-gray-900">
+            <h2 className="text-2xl font-bold mb-2">Test Complete! 🎉</h2>
+            <div className="flex justify-center gap-8 font-semibold">
+              <div>WPM: {wpm}</div>
+              <div>Accuracy: {accuracy}%</div>
+              <div>Errors: {errors}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Reset Button */}
+        <button
+          onClick={resetTest}
+          className="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-xl transition-colors duration-200"
+        >
+          {finished ? 'Try Again' : 'Reset Test'}
+        </button>
+      </div>
+    </div>
+  );
+}
